@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Marine Biodiversity Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #eef7f9;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .upload-box {
+      padding: 20px;
+      border: 2px dashed #4da6ff;
+      border-radius: 10px;
+      text-align: center;
+      background-color: #ffffff;
+    }
+    video {
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 8px;
+    }
+    .results {
+      background-color: #fff;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐠 Marine Biodiversity Video Analyzer</h1>
+
+    <div class="upload-box">
+      <input type="file" id="videoUpload" accept="video/*"><br><br>
+      <button onclick="sendVideo()">Analyze Video</button>
+      <video id="videoPreview" controls hidden></video>
+    </div>
+
+    <div class="results" id="resultBox" hidden>
+      <h3>🧠 Detected Species:</h3>
+      <ul id="speciesList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('videoUpload');
+    const video = document.getElementById('videoPreview');
+    const resultBox = document.getElementById('resultBox');
+    const speciesList = document.getElementById('speciesList');
+
+    input.addEventListener('change', function () {
+      const file = input.files[0];
+      if (file) {
+        video.src = URL.createObjectURL(file);
+        video.hidden = false;
+      }
+    });
+
+    async function sendVideo() {
+      const file = input.files[0];
+      if (!file) {
+        alert("Please upload a video first.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Replace with your real Render API URL
+      const apiURL = "https://marine-backend-s8fq.onrender.com";
+
+      const response = await fetch(apiURL, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json();
+      resultBox.hidden = false;
+      speciesList.innerHTML = "";
+
+      if (data.species_detected && data.species_detected.length > 0) {
+        data.species_detected.forEach(species => {
+          const li = document.createElement("li");
+          li.textContent = species;
+          speciesList.appendChild(li);
+        });
+      } else {
+        speciesList.innerHTML = "<li>No species detected.</li>";
+      }
+    }
+  </script>
+</body>
+</html>
