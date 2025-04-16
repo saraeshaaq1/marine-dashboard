@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Marine Biodiversity Dashboard</title>
+  <title>Marine Analyzer</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
+      font-family: Arial;
       background-color: #eef7f9;
+      margin: 40px;
     }
     .container {
       max-width: 800px;
@@ -14,22 +14,22 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 30px;
     }
     .upload-box {
-      padding: 20px;
       border: 2px dashed #4da6ff;
+      padding: 20px;
       border-radius: 10px;
+      background-color: #fff;
       text-align: center;
-      background-color: #ffffff;
     }
-    video {
-      width: 100%;
+    #preview {
       margin-top: 20px;
+      width: 100%;
       border-radius: 8px;
+      display: none;
     }
     .results {
-      background-color: #fff;
+      background: #fff;
       padding: 20px;
       margin-top: 20px;
       border-radius: 10px;
@@ -38,66 +38,81 @@
 </head>
 <body>
   <div class="container">
-    <h1>🐠 Marine Biodiversity Video Analyzer</h1>
-
+    <h1>🧠 Marine Species Analyzer</h1>
     <div class="upload-box">
-      <input type="file" id="videoUpload" accept="video/*"><br><br>
-      <button onclick="sendVideo()">Analyze Video</button>
-      <video id="videoPreview" controls hidden></video>
+      <input type="file" id="fileInput" accept="image/*,video/*"><br><br>
+      <button onclick="sendFile()">Analyze</button><br>
+      <img id="previewImage" src="" alt="Preview" style="display:none;" />
+      <video id="previewVideo" controls style="display:none;"></video>
     </div>
 
     <div class="results" id="resultBox" hidden>
-      <h3>🧠 Detected Species:</h3>
+      <h3>Detected Species:</h3>
       <ul id="speciesList"></ul>
     </div>
   </div>
 
   <script>
-    const input = document.getElementById('videoUpload');
-    const video = document.getElementById('videoPreview');
+    const fileInput = document.getElementById('fileInput');
+    const previewImage = document.getElementById('previewImage');
+    const previewVideo = document.getElementById('previewVideo');
     const resultBox = document.getElementById('resultBox');
     const speciesList = document.getElementById('speciesList');
 
-    input.addEventListener('change', function () {
-      const file = input.files[0];
-      if (file) {
-        video.src = URL.createObjectURL(file);
-        video.hidden = false;
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+
+      if (file.type.startsWith('image')) {
+        previewImage.src = url;
+        previewImage.style.display = 'block';
+        previewVideo.style.display = 'none';
+      } else if (file.type.startsWith('video')) {
+        previewVideo.src = url;
+        previewVideo.style.display = 'block';
+        previewImage.style.display = 'none';
       }
     });
 
-    async function sendVideo() {
-      const file = input.files[0];
+    async function sendFile() {
+      const file = fileInput.files[0];
       if (!file) {
-        alert("Please upload a video first.");
+        alert("Please upload an image or video.");
         return;
       }
 
       const formData = new FormData();
       formData.append("file", file);
 
-      // Replace with your real Render API URL
-      const apiURL = "https://marine-backend-s8fq.onrender.com/analyze";
+      const apiURL = "https://marine-backend-s8fq.onrender.com/analyze"; // Update if needed
 
-      const response = await fetch(apiURL, {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await response.json();
-      resultBox.hidden = false;
-      speciesList.innerHTML = "";
-
-      if (data.species_detected && data.species_detected.length > 0) {
-        data.species_detected.forEach(species => {
-          const li = document.createElement("li");
-          li.textContent = species;
-          speciesList.appendChild(li);
+      try {
+        const response = await fetch(apiURL, {
+          method: "POST",
+          body: formData
         });
-      } else {
-        speciesList.innerHTML = "<li>No species detected.</li>";
+
+        const data = await response.json();
+        resultBox.hidden = false;
+        speciesList.innerHTML = "";
+
+        if (data.species_detected && data.species_detected.length > 0) {
+          data.species_detected.forEach(species => {
+            const li = document.createElement("li");
+            li.textContent = species;
+            speciesList.appendChild(li);
+          });
+        } else {
+          speciesList.innerHTML = "<li>No species detected.</li>";
+        }
+      } catch (error) {
+        alert("Failed to connect to the backend.");
+        console.error(error);
       }
     }
   </script>
 </body>
 </html>
+
